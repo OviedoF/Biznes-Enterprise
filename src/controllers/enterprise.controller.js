@@ -7,15 +7,21 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 const {deleteReqImages, deleteImage} = require(path.join(__dirname, '..', 'utils', 'images.utils'));
 const nodeMailer = require('nodemailer');
+const xlsxFile = require('read-excel-file/node');
 
 const enterpriseController = {};
 
 enterpriseController.getEnterprises = async (req, res) => {
     try {
         const enterprises = await Enterprise.find();
-        res.json(enterprises);
+        res.status(200).send({
+            status: true,
+            message: 'Empresas encontradas.',
+            data: enterprises
+        });
     } catch (error) {
         res.status(500).json({
+            status: false,
             message: error.message
         });
     }
@@ -31,9 +37,14 @@ enterpriseController.getEnterprise = async (req, res) => {
             });
         }
 
-        res.json(enterprise);
+        res.status(200).send({
+            status: true,
+            message: 'Empresa encontrada.',
+            data: enterprise
+        });
     } catch (error) {
         res.status(500).json({
+            status: false,
             message: error.message
         });
     }
@@ -58,7 +69,6 @@ enterpriseController.createEnterprise = async (req, res) => {
         };
 
         const newPassword = await Enterprise.encryptPassword(body.password);
-        console.log(body.password, newPassword);
 
         body.password = newPassword;
 
@@ -70,17 +80,21 @@ enterpriseController.createEnterprise = async (req, res) => {
             expiresIn: 60 * 60 * 24
         });
 
-        res.json({
+        res.status(200).send({
+            status: true,
             message: 'Enterprise created successfully',
-            token,
-            enterprise: {
-                ...enterprise._doc,
-                password: null
+            data: {
+                token,
+                enterprise: {
+                    ...enterprise._doc,
+                    password: null
+                }
             }
         });
     } catch (error) {
         deleteReqImages(req);
         res.status(500).json({
+            status: false,
             message: error.message
         });
     }
@@ -95,7 +109,8 @@ enterpriseController.updateEnterprise = async (req, res) => {
 
         if (!enterpriseFinded) {
             deleteReqImages(req);
-            return res.status(404).json({
+            return res.status(404).send({
+                status: false,
                 message: 'Empresa no encontrada.'
             });
         }
@@ -128,13 +143,15 @@ enterpriseController.updateEnterprise = async (req, res) => {
 
         const updated = await Enterprise.findByIdAndUpdate(id, body, { new: true });
 
-        res.json({
+        res.status(200).send({
+            status: true,
             message: 'Enterprise updated successfully',
-            updated,
+            data: updated,
         });
     } catch (error) {
         deleteReqImages(req);
         res.status(500).json({
+            status: false,
             message: error.message
         });
     }
@@ -147,7 +164,8 @@ enterpriseController.createMemberInvitation = async (req, res) => {
         const enterprise = await Enterprise.findById(id);
 
         if (!enterprise) {
-            return res.status(404).json({
+            return res.status(404).send({
+                status: false,
                 message: 'Empresa no encontrada.'
             });
         }
@@ -180,7 +198,8 @@ enterpriseController.createMemberInvitation = async (req, res) => {
         transporter.sendMail(mailOptions, async (error, info) => {
             if (error) {
                 console.log(error);
-                return res.status(500).json({
+                return res.status(500).send({
+                    status: false,
                     message: 'Error al enviar el correo.'
                 });
             }
@@ -192,15 +211,71 @@ enterpriseController.createMemberInvitation = async (req, res) => {
 
             await memberInvitation.save();
 
-            return res.json({
+            return res.status(200).send({
+                status: true,
                 message: 'Invitación enviada correctamente.'
             });
         });
     } catch (error) {
-        res.status(500).json({
+        res.status(500).send({
+            status: false,
             message: error.message
         });
     }
 }
+
+enterpriseController.readExcelWithMails= async (req, res) => {
+    try {
+        const { id } = req.params;
+        const enterprise = await Enterprise.findById(id);
+
+        if (!enterprise) {
+            return res.status(404).send({
+                status: false,
+                message: 'Empresa no encontrada.'
+            });
+        };
+
+        // check if the file is an excel file
+        const excelExtensions = /\.(xls|XLS|xlsx|XLSX)$/; 
+
+        if (!excelExtensions.test(req.files.excel[0].filename)) {
+            return res.status(400).send({
+                status: false,
+                message: 'El archivo no es un archivo de excel. Verifique la extensión del archivo. (xls, XLS, xlsx, XLSX)'
+            });
+        }
+
+        const excelPath = req.files.excel[0].path;
+
+        const data = await xlsxFile(excelPath); 
+
+        const emails = data.map(row => row[0]); 
+
+        emails.shift()
+
+        const regexMail = /^([a-zA-Z0-9_\.\-])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
+
+        for (let i = 0; i < emails.length; i++) {
+            if (!regexMail.test(emails[i])) {
+                emails[i] = false;
+            }
+        }
+
+        const pathFile = path.join(__dirname, '..', 'public', 'images', req.files.excel[0].filename)
+        deleteImage(pathFile); // Delete the excel file from the server
+
+        res.status(200).send({
+            status: true,
+            message: 'Archivo excel leído correctamente.',
+            data: emails
+        });
+    } catch (error) {
+        res.status(500).json({
+            status: false,
+            message: error.message
+        });
+    }
+};
 
 module.exports = enterpriseController;

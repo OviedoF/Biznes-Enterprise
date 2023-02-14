@@ -8,6 +8,7 @@ router.get('/:id', enterpriseController.getEnterprise);
 
 router.post('/', enterpriseController.createEnterprise);
 router.post('/:id/invite-member', enterpriseController.createMemberInvitation);
+router.post('/:id/read-excel', enterpriseController.readExcelWithMails);
 
 router.put('/:id', enterpriseController.updateEnterprise);
 

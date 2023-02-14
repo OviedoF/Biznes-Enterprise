@@ -25,6 +25,7 @@ authController.login = async (req, res) => {
 
             if (!userToSend) {
                 return res.status(404).json({
+                    status: false,
                     message: 'No se ha encontrado un usuario con ese email.'
                 });
             };
@@ -33,6 +34,7 @@ authController.login = async (req, res) => {
 
             if (!isMatch) {
                 return res.status(401).json({
+                    status: false,
                     message: 'La contraseña es incorrecta.'
                 });
             };
@@ -45,6 +47,7 @@ authController.login = async (req, res) => {
 
             if (!isMatch) {
                 return res.status(401).json({
+                    status: false,
                     message: 'La contraseña es incorrecta.'
                 });
             }
@@ -54,9 +57,14 @@ authController.login = async (req, res) => {
             expiresIn: 86400
         });
 
-        res.json({ token,  userType, userToSend });
+        res.status(200).send({
+            status: true,
+            message: 'Usuario logueado correctamente.',
+            data: { token,  userType, userToSend }
+        });
     } catch (error) {
-        res.status(500).json({
+        res.status(500).send({
+            status: false,
             message: error.message
         });
     }

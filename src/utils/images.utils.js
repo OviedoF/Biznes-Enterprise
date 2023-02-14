@@ -4,11 +4,12 @@ const path = require('path');
 const deleteImage = (dirname) => {
     fs.unlink(dirname, (err) => {
         if (err) {
-          console.error('No se ha podido eliminar la imágen del servidor.');
+          console.error(err);
+          console.error('No se ha podido eliminar el archivo del servidor.');
           return
         };
       
-        console.log('Imágen eliminada del servidor.');
+        console.log('Archivo eliminado del servidor.');
     })
 };
 
