@@ -58,9 +58,11 @@ enterpriseController.createEnterprise = async (req, res) => {
         };
 
         const newPassword = await Enterprise.encryptPassword(body.password);
+        console.log(body.password, newPassword);
+
         body.password = newPassword;
 
-        const enterprise = new Enterprise(body, {password: false});
+        const enterprise = new Enterprise(body);
 
         await enterprise.save();
 
@@ -81,45 +83,6 @@ enterpriseController.createEnterprise = async (req, res) => {
         res.status(500).json({
             message: error.message
         });
-    }
-}
-
-enterpriseController.login = async (req, res) => {
-    try {
-        /* login */
-        
-        const { email, password } = req.body;
-
-        const enterprise = await Enterprise.findOne({ email: email });
-
-        if (!enterprise) {
-            return res.status(404).json({
-                message: 'Email o contraseña incorrecta.'
-            });
-        }
-
-        const matchPassword = await Enterprise.comparePassword(password, enterprise.password);
-
-        if (!matchPassword) {
-            return res.status(401).json({
-                message: 'Email o contraseña incorrecta.'
-            });
-        }
-
-        const token = jwt.sign({ _id: enterprise._id }, process.env.SECRET_JWT_USER, {
-            expiresIn: 60 * 60 * 24
-        });
-
-        res.json({
-            message: 'Enterprise logged in successfully',
-            token,
-            enterprise
-        });
-    } catch (error) {
-        console.log(error);
-        res.status(500).json({
-            message: error.message
-        });       
     }
 }
 

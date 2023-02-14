@@ -4,7 +4,6 @@ const router = express.Router();
 const userController = require(path.join(__dirname, '..', 'controllers', 'user.controller'));
 
 router.post('/register/:enterpriseId', userController.register);
-router.post('/login', userController.login);
 
 router.get('/getUsersByEnterprise/:enterpriseId', userController.getUsersByEnterprise);
 

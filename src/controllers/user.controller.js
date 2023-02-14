@@ -71,43 +71,6 @@ userController.register = async (req, res) => {
     }
 };
 
-userController.login = async (req, res) => {
-    try {
-        const {email, password} = req.body;
-
-        const user = await User.findOne({email}).deepPopulate(['enterprise.members']);
-
-        if (!user) {
-            return res.status(404).json({
-                message: 'Usuario no encontrado.'
-            });
-        }
-
-        const match = await User.comparePassword(password, user.password);
-
-        if (!match) {
-            return res.status(401).json({
-                message: 'Contraseña incorrecta.'
-            });
-        }
-
-        const token = jwt.sign({id: user._id}, process.env.SECRET_JWT_USER, {
-            expiresIn: 60 * 60 * 24
-        });
-
-        res.json({
-            message: 'Usuario logueado correctamente.',
-            token,
-            user: user._doc
-        });
-    } catch (error) {
-        deleteReqImages(req);
-        res.status(500).json({
-            message: error.message
-        });
-    }
-};
-
 userController.updateUser = async (req, res) => {
     try {
         const {userId} = req.params;

@@ -7,7 +7,6 @@ router.get('/', enterpriseController.getEnterprises);
 router.get('/:id', enterpriseController.getEnterprise);
 
 router.post('/', enterpriseController.createEnterprise);
-router.post('/login', enterpriseController.login);
 router.post('/:id/invite-member', enterpriseController.createMemberInvitation);
 
 router.put('/:id', enterpriseController.updateEnterprise);
