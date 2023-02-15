@@ -40,8 +40,6 @@ authController.login = async (req, res) => {
             };
         };
 
-        console.log(userToSend)
-
         if(userType !== 'enterprise') {
             const isMatch = await User.comparePassword(password, userToSend.password);
 
