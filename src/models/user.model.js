@@ -50,12 +50,7 @@ const userSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Card'
     }],
-
-    editPermissions: [{
-        name: String,
-        value: Boolean,
-        limit: Number
-    }]
+    editPermissions: [String]
 }, {
     timestamps: true,
     versionKey: false

@@ -1,6 +1,8 @@
 const path = require('path');
 const fs = require('fs');
 const Enterprise = require(path.join(__dirname, '..', 'models', 'enterprise.model'));
+const EnterpriseRol = require(path.join(__dirname, '..', 'models', 'enterpriseRol.model'));
+const User = require(path.join(__dirname, '..', 'models', 'user.model'));
 const Membership = require(path.join(__dirname, '..', 'models', 'membership.model'));
 const MemberInvitation = require(path.join(__dirname, '..', 'models', 'memberInvitation.model'));
 const jwt = require('jsonwebtoken');
@@ -277,5 +279,182 @@ enterpriseController.readExcelWithMails= async (req, res) => {
         });
     }
 };
+
+enterpriseController.createEnterpriseRol = async (req, res) => {
+    try {
+        const { idEnterprise } = req.params;
+        const body = req.body;
+
+        body.enterprise = idEnterprise;
+
+        const enterprise = await Enterprise.findById(idEnterprise);
+
+        if (!enterprise) {
+            return res.status(404).send({
+                status: false,
+                message: 'Empresa no encontrada.'
+            });
+        }
+
+        if(body.users) {
+            const users = await User.find({ _id: { $in: body.users } });
+
+            if (users.length !== body.users.length) {
+                return res.status(404).send({
+                    status: false,
+                    message: 'Uno o más usuarios no se encontraron.'
+                });
+            };
+
+            for (let i = 0; i < users.length; i++) {
+                const user = users[i];
+
+                if (user.enterprise.toString() !== idEnterprise) {
+                    return res.status(400).send({
+                        status: false,
+                        message: 'Uno o más usuarios no pertenecen a la empresa.'
+                    });
+                }
+            }
+
+            // Actualizar permisos de los usuarios
+
+            for (let i = 0; i < users.length; i++) {
+                const user = users[i];
+
+                user.permissions = body.permissions;
+
+                await user.save();
+            }
+        }
+
+        const enterpriseRol = new EnterpriseRol(body);
+
+        const actualizedEnterprise = await Enterprise.findByIdAndUpdate(idEnterprise, { $push: { roles: enterpriseRol._id } }, { new: true }).deepPopulate(['members, cards, ', 'roles.users']);
+
+        await enterpriseRol.save();
+
+        res.status(200).send({
+            status: true,
+            message: 'Rol creado y permisos de los usuarios actualizados.',
+            data: actualizedEnterprise
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: false,
+            message: error.message
+        });
+    }
+}
+
+enterpriseController.updateEnterpriseRol = async (req, res) => {
+    try {
+        const { idEnterprise, idEnterpriseRol } = req.params;
+        const body = req.body;
+
+        const enterprise = await Enterprise.findById(idEnterprise);
+
+        if (!enterprise) {
+            return res.status(404).send({
+                status: false,
+                message: 'Empresa no encontrada.'
+            });
+        }
+
+        const enterpriseRol = await EnterpriseRol.findById(idEnterpriseRol);
+
+        if (!enterpriseRol) {
+            return res.status(404).send({
+                status: false,
+                message: 'Rol no encontrado.'
+            });
+        }
+
+        if (enterpriseRol.enterprise.toString() !== idEnterprise) {
+            return res.status(400).send({
+                status: false,
+                message: 'El rol no pertenece a la empresa.'
+            });
+        }
+
+        if(body.users) {
+            const users = await User.find({ _id: { $in: body.users } });
+
+            if (users.length !== body.users.length) {
+                return res.status(404).send({
+                    status: false,
+                    message: 'Uno o más usuarios no se encontraron.'
+                });
+
+            };
+
+            for (let i = 0; i < users.length; i++) {
+                const user = users[i];
+
+                if (user.enterprise.toString() !== idEnterprise) {
+                    return res.status(400).send({
+                        status: false,
+                        message: 'Uno o más usuarios no pertenecen a la empresa.'
+                    });
+                }
+
+                user.permissions = body.permissions;
+
+                await user.save();
+            }
+
+            enterpriseRol.users = body.users;
+        }
+
+        enterpriseRol.name = body.name;
+        enterpriseRol.permissions = body.permissions;
+
+        await enterpriseRol.save();
+
+        res.status(200).send({
+            status: true,
+            message: 'Rol actualizado y permisos de los usuarios actualizados.',
+            data: enterpriseRol
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: false,
+            message: error.message
+        });
+    }
+}
+
+enterpriseController.updateUserPermissions = async (req, res) => {
+    try {
+        const { idEnterprise, idUser } = req.params;
+
+        const body = req.body;
+
+        const enterprise = await Enterprise.findById(idEnterprise);
+
+        if (!enterprise) {
+            return res.status(404).send({
+                status: false,
+                message: 'Empresa no encontrada.'
+            });
+        }
+
+        const userActualized = await User.findByIdAndUpdate(idUser, { permissions: body.permissions }, { new: true });
+        
+        res.status(200).send({
+            status: true,
+            message: 'Permisos del usuario actualizados.',
+            data: userActualized
+        });
+    } catch (error) {
+        console.log(error);
+        res.status(500).json({
+            status: false,
+            message: error.message
+        });
+    }
+}
 
 module.exports = enterpriseController;

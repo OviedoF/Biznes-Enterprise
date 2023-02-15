@@ -34,7 +34,7 @@ const enterpriseSchema = new Schema({
         type: Schema.Types.ObjectId
     }],
     cards: [{
-        ref: 'Card',
+        ref: 'CardTemplate',
         type: Schema.Types.ObjectId
     }],
     notifications: [{
@@ -46,6 +46,10 @@ const enterpriseSchema = new Schema({
         type: Schema.Types.ObjectId,
         ref: 'Membership',
     },
+    roles: [{
+        ref: 'EnterpriseRol',
+        type: Schema.Types.ObjectId
+    }],
 
 }, {
     timestamps: true,
