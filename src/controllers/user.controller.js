@@ -1,7 +1,7 @@
 const path = require('path');
 const Enterprise = require(path.join(__dirname, '..', 'models', 'enterprise.model'));
 const User = require(path.join(__dirname, '..', 'models', 'user.model'));
-const MemberInvitation = require(path.join(__dirname, '..', 'models', 'memberInvitation.model'));
+const MemberInvitation = require(path.join(__dirname, '..', 'models', 'verifiers', 'memberInvitation.model'));
 require('dotenv').config();
 const {deleteReqImages, deleteImage} = require(path.join(__dirname, '..', 'utils', 'images.utils'));
 const jwt = require('jsonwebtoken');
@@ -16,6 +16,7 @@ userController.register = async (req, res) => {
         const enterprise = await Enterprise.findById(enterpriseId).deepPopulate('members');
 
         if (!enterprise) {
+            deleteReqImages(req);
             return res.status(404).send({
                 status: false,
                 message: 'No se ha encontrado una empresa a la que asociar el usuario.'
@@ -45,9 +46,10 @@ userController.register = async (req, res) => {
         const isValid = await MemberInvitation.findOne({email: body.email, enterprise: enterpriseId, active: true});
 
         if (!isValid) {
+            deleteReqImages(req);
             return res.status(401).send({
                 status: false,
-                message: 'No tienes permiso de unirte a esta empresa, revisa que tu mail sea el correcto. Si no lo es, solicita una invitación.'
+                message: 'No tienes permiso de unirte a esta empresa, solicita una invitación.'
             });
         };
 

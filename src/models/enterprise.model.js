@@ -33,7 +33,7 @@ const enterpriseSchema = new Schema({
         ref: 'User',
         type: Schema.Types.ObjectId
     }],
-    cards: [{
+    templates: [{
         ref: 'CardTemplate',
         type: Schema.Types.ObjectId
     }],

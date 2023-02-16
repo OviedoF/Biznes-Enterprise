@@ -3,6 +3,7 @@ const path = require('path');
 const cors = require('cors');
 const morgan = require('morgan');
 const fs = require('fs-extra');
+const initAgenda = require(path.join(__dirname, 'config', 'agenda.init.js'));
 require('dotenv').config();
 const createInitialMemberships = require(path.join(__dirname, 'seeds', 'membership.seed.js'));
 
@@ -29,7 +30,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use(require(path.join(__dirname, 'config', 'multer.config')));
 
 // configs
-// InitAgenda();
+initAgenda();
 
 // seeds
 createInitialMemberships();

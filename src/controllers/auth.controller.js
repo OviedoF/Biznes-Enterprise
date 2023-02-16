@@ -15,13 +15,12 @@ authController.login = async (req, res) => {
         
         let userToSend = null;
 
-        userToSend = await User.findOne({email}).deepPopulate(['enterprise.members']);
+        userToSend = await User.findOne({email}).deepPopulate('enterprise.members', 'membership');
         let userType = 'user';
 
         if (!userToSend) {
-            userToSend = await Enterprise.findOne({ email: email });
+            userToSend = await Enterprise.findOne({ email: email }).deepPopulate(['members', 'membership', 'roles']);
             userType = 'enterprise';
-            console.log(userToSend)
 
             if (!userToSend) {
                 return res.status(404).json({
@@ -58,9 +57,13 @@ authController.login = async (req, res) => {
         res.status(200).send({
             status: true,
             message: 'Usuario logueado correctamente.',
-            data: { token,  userType, userToSend }
+            data: { token,  userType, userToSend: {
+                ...userToSend._doc,
+                password: null
+            }}
         });
     } catch (error) {
+        console.log(error);
         res.status(500).send({
             status: false,
             message: error.message

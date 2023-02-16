@@ -28,7 +28,9 @@ const config = multer({
     {name: 'coverImage', maxCount: 1},
     {name: 'userImage', maxCount: 1},
     {name: 'logo', maxCount: 1},
-    {name: 'excel', maxCount: 1}
+    {name: 'excel', maxCount: 1},
+    {name: 'logoImage', maxCount: 1},
+    {name: 'perfilImage', maxCount: 1},
 ]); // la consulta va a responder a la key "images" en la petición.
 
 module.exports = config;

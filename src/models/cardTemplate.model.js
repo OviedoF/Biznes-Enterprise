@@ -46,9 +46,6 @@ const cardTemplateSchema = new Schema({
         city: String,
         address: String
     },
-    vcard: {
-        type: String
-    },
     vcardWants: {
         type: Boolean,
     },
